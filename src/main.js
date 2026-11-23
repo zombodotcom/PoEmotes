@@ -92,8 +92,12 @@ function detectLogPath() {
   return best ? best.p : '';
 }
 
+const alive = () => !!win && !win.isDestroyed();
+const timers = [];
+let quitting = false;
+
 function send(channel, payload) {
-  if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
+  if (alive()) win.webContents.send(channel, payload);
 }
 
 function isNpc(msg) {
@@ -126,7 +130,7 @@ async function refreshEmotes() {
 }
 
 function applyLock() {
-  if (!win) return;
+  if (!alive()) return;
   win.setIgnoreMouseEvents(locked, { forward: true });
   win.setFocusable(!locked);
   if (!locked) win.focus();
@@ -137,7 +141,7 @@ function applyLock() {
 // Show the overlay only while PoE (or the overlay itself, in edit mode) is in front,
 // so it doesn't float over your browser or Discord.
 function updateVisibility() {
-  if (!win) return;
+  if (!alive() || quitting) return;
   const want = !userHidden && (!locked || !config.onlyWhenPoeFocused || poeFocused || overlayFocused);
   if (want && !win.isVisible()) win.showInactive();
   else if (!want && win.isVisible()) win.hide();
@@ -150,8 +154,8 @@ let hoverSince = 0;
 let revealed = false;
 
 function watchCursor() {
-  setInterval(() => {
-    if (!win || !win.isVisible()) return;
+  timers.push(setInterval(() => {
+    if (!alive() || !win.isVisible()) return;
     let inside = false;
     if (locked && config.hoverReveal) {
       const p = screen.getCursorScreenPoint();
@@ -164,18 +168,19 @@ function watchCursor() {
     // reveal after a short dwell; come back quickly once the cursor leaves
     const want = inside && now - hoverSince >= (Number(config.revealDelayMs) || 0);
     if (want !== revealed) { revealed = want; send('reveal', revealed); }
-  }, 50);
+  }, 50));
 }
 
 function watchForeground() {
-  setInterval(() => {
+  timers.push(setInterval(() => {
+    if (!alive()) return;
     try {
       const fg = win32.foregroundWindow();
       poeFocused = win32.isPoeWindow(fg);
-      overlayFocused = !!win && win.isFocused();
+      overlayFocused = win.isFocused();
     } catch { poeFocused = true; }
     updateVisibility();
-  }, 250);
+  }, 250));
 }
 
 function createWindow() {
@@ -203,7 +208,7 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => updateVisibility());
 
-  const saveBounds = () => { config.bounds = win.getBounds(); saveConfig(); };
+  const saveBounds = () => { if (!alive()) return; config.bounds = win.getBounds(); saveConfig(); };
   win.on('moved', saveBounds);
 
   win.webContents.on('did-finish-load', () => {
@@ -229,6 +234,7 @@ ipcMain.on('save-config', (_e, partial) => {
 ipcMain.on('refresh-emotes', () => refreshEmotes());
 ipcMain.on('toggle-lock', () => { locked = !locked; applyLock(); });
 ipcMain.on('resize-by', (_e, { dw, dh }) => {
+  if (!alive()) return;
   const b = win.getBounds();
   win.setBounds({ ...b, width: Math.max(220, b.width + dw), height: Math.max(120, b.height + dh) });
   config.bounds = win.getBounds();
@@ -243,8 +249,14 @@ app.whenReady().then(() => {
   globalShortcut.register('CommandOrControl+Shift+H', () => { userHidden = !userHidden; updateVisibility(); });
 });
 
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
+function shutdown() {
+  quitting = true;
+  for (const t of timers) clearInterval(t);
   if (tailer) tailer.stop();
+}
+app.on('before-quit', shutdown);
+app.on('will-quit', () => {
+  shutdown();
+  globalShortcut.unregisterAll();
 });
 app.on('window-all-closed', () => app.quit());
