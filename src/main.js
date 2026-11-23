@@ -23,9 +23,9 @@ const DEFAULT_NPCS = [
 
 const DEFAULT_CONFIG = {
   logPath: '',
-  twitchChannels: [],
+  twitchChannels: ['xqc', 'forsen', 'zizaran', 'quin69', 'sodapoppin', 'moonmoon', 'mathil1'],
   fontSize: 15,
-  fadeSeconds: 30,
+  fadeSeconds: 0,
   maxMessages: 150,
   backgroundOpacity: 0.8,
   showTimestamps: false,
@@ -33,7 +33,7 @@ const DEFAULT_CONFIG = {
   hideNpcs: true,
   npcNames: DEFAULT_NPCS,
   emoteOnly: false,
-  onlyWhenPoeFocused: true,
+  onlyWhenPoeFocused: false,
   hoverReveal: true,
   revealDelayMs: 350,
   bounds: null,
