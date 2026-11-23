@@ -96,8 +96,17 @@ function atBottom() {
   return chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 30;
 }
 
+// Follow new messages unless the user scrolled up to read. Emote images finish
+// loading after a message is added and make it taller, so re-stick on image load too.
+let userScrolledUp = false;
+function stickToBottom() {
+  if (!userScrolledUp) chatEl.scrollTop = chatEl.scrollHeight;
+}
+chatEl.addEventListener('wheel', () => { setTimeout(() => { userScrolledUp = !atBottom(); }, 50); });
+chatEl.addEventListener('scroll', () => { if (atBottom()) userScrolledUp = false; });
+chatEl.addEventListener('load', stickToBottom, true);
+
 function addMessages(list, backfill) {
-  const stick = atBottom();
   const now = Date.now();
   for (const msg of list) {
     const entry = { msg, el: renderMessage(msg), shownAt: now, backfill };
@@ -108,7 +117,7 @@ function addMessages(list, backfill) {
   }
   const max = (config && config.maxMessages) || 150;
   while (messages.length > max) messages.shift().el.remove();
-  if (stick || locked) chatEl.scrollTop = chatEl.scrollHeight;
+  stickToBottom();
 }
 
 function rerenderAll() {
@@ -119,7 +128,8 @@ function rerenderAll() {
     entry.el = el;
     updateFade(entry);
   }
-  chatEl.scrollTop = chatEl.scrollHeight;
+  userScrolledUp = false;
+  stickToBottom();
 }
 
 function applyConfig() {
@@ -155,7 +165,8 @@ poechat.on('lock', (l) => {
   document.body.classList.toggle('locked', l);
   document.body.classList.toggle('unlocked', !l);
   if (l) settingsEl.hidden = true;
-  chatEl.scrollTop = chatEl.scrollHeight;
+  userScrolledUp = false;
+  stickToBottom();
 });
 
 setInterval(() => { const now = Date.now(); for (const e of messages) updateFade(e, now); }, 1000);
