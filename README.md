@@ -24,6 +24,8 @@ PoE's own chat window pops back up whenever you open it to type, so you type in 
 
 **Ctrl+Enter** opens the box pre-filled with `@<last person who whispered you>`.
 
+**Item links:** Ctrl+Alt+click an item as usual. PoE opens its own chat box with the link, and the overlay leaves Enter alone until you send it. The overlay shows links as the item name only (the log has no stats), so hover them in PoE's chat to see the tooltip.
+
 You can change both hotkeys in Settings. Clear the chat hotkey to give Enter back to PoE.
 
 Recommended PoE setup: run in Windowed Fullscreen, stay joined to the channels you want (leaving a channel stops it being logged), and hide or shrink PoE's chat window so the overlay is the one you read.
