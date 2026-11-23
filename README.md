@@ -1,4 +1,4 @@
-﻿# PoE Chat Overlay
+# PoE Chat Overlay
 
 A transparent, click-through overlay that mirrors Path of Exile (1 & 2) chat with Twitch, BTTV, FFZ and 7TV emotes, including animated ones.
 
@@ -13,31 +13,20 @@ npm start
 
 Or double-click `start.bat`.
 
-## Talking
+## How it works with PoE chat
 
-PoE's own chat window pops back up whenever you open it to type, so you type in the overlay instead:
+The overlay is an add-on and never touches your keyboard. PoE's own chat keeps working exactly as before: Enter, item links, hovering items, everything.
 
-1. In game, press **Enter**. The overlay's input box opens instead of PoE's. Enter is only taken over while PoE is the focused window.
-2. Type normally. Use the usual prefixes to pick a channel: `#global`, `$trade`, `%party`, `&guild`, `@name whisper`.
-3. Press **Tab** to autocomplete emote names, and press Tab again to cycle through the matches. **Up/Down** browses what you sent before.
-4. Press **Enter** to send. The overlay focuses PoE and pastes your message into its chat (your clipboard is restored afterwards). **Esc** cancels.
-
-**Ctrl+Enter** opens the box pre-filled with `@<last person who whispered you>`.
-
-**Seeing items:** linked items only exist inside PoE (the log has just the name), so press **Shift+Enter** to open PoE's own chat, hover a link for its tooltip (Ctrl+C copies it), then Esc. The overlay takes Enter back once PoE's chat closes.
-
-**Item links:** Ctrl+Alt+click an item as usual. PoE opens its own chat box with the link, and the overlay leaves Enter alone until you send it. The overlay shows links as the item name only (the log has no stats), so hover them in PoE's chat to see the tooltip.
-
-You can change both hotkeys in Settings. Clear the chat hotkey to give Enter back to PoE.
-
-Recommended PoE setup: run in Windowed Fullscreen, stay joined to the channels you want (leaving a channel stops it being logged), and hide or shrink PoE's chat window so the overlay is the one you read.
+- By default the overlay shows **only messages that contain emotes**, as a small feed. Place it wherever you like (next to or above PoE's chat). You can switch this off in Settings to mirror all of chat.
+- Type emotes as plain words in PoE chat (`KEKW`, `catJAM`, …). Anyone running the overlay sees them as images, and everyone else sees the text.
+- Hiding a channel in PoE's chat display doesn't stop it being logged, so you can hide global in PoE and still get its emotes in the overlay. Leaving a channel does stop it.
+- The overlay hides itself when PoE isn't the active window. You can change that in Settings.
 
 ## Use
 
 - **Ctrl+Shift+L**: switch edit mode on or off. In edit mode you can drag the title bar to move the overlay, drag the corner grip to resize it, open Settings, or quit. Locked mode is click-through.
 - **Ctrl+Shift+H**: hide or show the overlay.
 - Run PoE in **Windowed Fullscreen** (or Windowed). Exclusive fullscreen draws over every overlay.
-- Emotes are sent as plain words (`KEKW`, `catJAM`, â€¦). Anyone running this overlay sees them as images, and everyone else sees the text.
 
 ## Settings
 

@@ -76,8 +76,14 @@ function renderMessage(m) {
   return el;
 }
 
+function hasEmote(text) {
+  return text.split(/\s+/).some((t) => Object.prototype.hasOwnProperty.call(emotes, t));
+}
+
 function isVisible(m) {
-  return !config || config.channels[FILTER_KEY[m.channel]] !== false;
+  if (!config) return true;
+  if (config.channels[FILTER_KEY[m.channel]] === false) return false;
+  return !config.emoteOnly || hasEmote(m.text);
 }
 
 function updateFade(entry, now = Date.now()) {
@@ -127,9 +133,8 @@ function applyConfig() {
   f.backgroundOpacity.value = config.backgroundOpacity;
   f.showTimestamps.checked = !!config.showTimestamps;
   f.hideNpcs.checked = !!config.hideNpcs;
-  f.chatHotkey.value = config.chatHotkey || '';
-  f.replyHotkey.value = config.replyHotkey || '';
-  f.nativeChatHotkey.value = config.nativeChatHotkey || '';
+  f.emoteOnly.checked = !!config.emoteOnly;
+  f.onlyWhenPoeFocused.checked = !!config.onlyWhenPoeFocused;
   for (const k of Object.keys(config.channels)) f[`ch-${k}`].checked = config.channels[k];
   rerenderAll();
 }
@@ -153,115 +158,6 @@ poechat.on('lock', (l) => {
 
 setInterval(() => { const now = Date.now(); for (const e of messages) updateFade(e, now); }, 1000);
 
-// ---------- compose box (type here, it gets sent into PoE) ----------
-const composeEl = document.getElementById('compose');
-const inputEl = document.getElementById('compose-input');
-const suggestEl = document.getElementById('suggest');
-const history = [];
-let historyIdx = -1;
-let cycle = null; // { start, matches, idx } while Tab-cycling
-
-function currentWord() {
-  const pos = inputEl.selectionStart;
-  const before = inputEl.value.slice(0, pos);
-  const start = before.search(/\S+$/);
-  return start < 0 ? { start: pos, word: '' } : { start, word: before.slice(start) };
-}
-
-function findEmotes(prefix) {
-  if (prefix.length < 2) return [];
-  const lower = prefix.toLowerCase();
-  return Object.keys(emotes)
-    .filter((c) => c.toLowerCase().startsWith(lower))
-    .sort((a, b) => (b.startsWith(prefix) - a.startsWith(prefix)) || a.length - b.length || a.localeCompare(b))
-    .slice(0, 10);
-}
-
-function showSuggestions(list, sel = -1) {
-  suggestEl.replaceChildren(...list.map((code, i) => {
-    const s = span(i === sel ? 's sel' : 's');
-    s.appendChild(emoteImg(code, emotes[code]));
-    s.appendChild(document.createTextNode(code));
-    return s;
-  }));
-}
-
-function replaceWord(start, end, text) {
-  const v = inputEl.value;
-  inputEl.value = v.slice(0, start) + text + v.slice(end);
-  const caret = start + text.length;
-  inputEl.setSelectionRange(caret, caret);
-}
-
-function closeCompose() {
-  composeEl.hidden = true;
-  document.body.classList.remove('composing');
-  inputEl.value = '';
-  suggestEl.replaceChildren();
-  cycle = null;
-  historyIdx = -1;
-  chatEl.scrollTop = chatEl.scrollHeight;
-}
-
-poechat.on('compose', ({ prefill }) => {
-  document.body.classList.add('composing');
-  composeEl.hidden = false;
-  inputEl.value = prefill || '';
-  inputEl.focus();
-  inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
-  chatEl.scrollTop = chatEl.scrollHeight;
-});
-
-inputEl.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Tab') {
-    ev.preventDefault();
-    if (!cycle) {
-      const { start, word } = currentWord();
-      const matches = findEmotes(word);
-      if (!matches.length) return;
-      cycle = { start, matches, idx: 0, len: word.length };
-    } else {
-      cycle.idx = (cycle.idx + (ev.shiftKey ? cycle.matches.length - 1 : 1)) % cycle.matches.length;
-    }
-    const code = cycle.matches[cycle.idx];
-    replaceWord(cycle.start, cycle.start + cycle.len, code);
-    cycle.len = code.length;
-    showSuggestions(cycle.matches, cycle.idx);
-    return;
-  }
-  if (ev.key === 'Enter') {
-    ev.preventDefault();
-    const text = inputEl.value.trim();
-    if (text) { history.unshift(text); history.length = Math.min(history.length, 50); }
-    closeCompose();
-    poechat.sendChat(text);
-    return;
-  }
-  if (ev.key === 'Escape') {
-    ev.preventDefault();
-    closeCompose();
-    poechat.cancelCompose();
-    return;
-  }
-  if ((ev.key === 'ArrowUp' || ev.key === 'ArrowDown') && history.length) {
-    ev.preventDefault();
-    historyIdx = Math.max(-1, Math.min(history.length - 1, historyIdx + (ev.key === 'ArrowUp' ? 1 : -1)));
-    inputEl.value = historyIdx < 0 ? '' : history[historyIdx];
-    return;
-  }
-  cycle = null;
-});
-
-inputEl.addEventListener('input', () => {
-  if (cycle) return;
-  showSuggestions(findEmotes(currentWord().word));
-});
-
-// clicking back into the game cancels
-window.addEventListener('blur', () => {
-  if (!composeEl.hidden) { closeCompose(); poechat.cancelCompose(); }
-});
-
 // ---------- edit-mode UI ----------
 document.getElementById('btn-settings').onclick = () => { settingsEl.hidden = !settingsEl.hidden; };
 document.getElementById('btn-lock').onclick = () => poechat.toggleLock();
@@ -281,9 +177,8 @@ settingsEl.addEventListener('submit', (ev) => {
     backgroundOpacity: Number(f.backgroundOpacity.value),
     showTimestamps: f.showTimestamps.checked,
     hideNpcs: f.hideNpcs.checked,
-    chatHotkey: f.chatHotkey.value.trim(),
-    replyHotkey: f.replyHotkey.value.trim(),
-    nativeChatHotkey: f.nativeChatHotkey.value.trim(),
+    emoteOnly: f.emoteOnly.checked,
+    onlyWhenPoeFocused: f.onlyWhenPoeFocused.checked,
     channels,
   });
 });

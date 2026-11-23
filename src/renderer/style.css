@@ -145,34 +145,6 @@ body.unlocked .msg.faded { opacity: 0.55; }
 .msg .text   { color: #f4ede0; }
 .msg.whisper-from .text, .msg.whisper-to .text { color: var(--c-whisper); }
 
-/* ---------- compose box ---------- */
-body.composing #frame { background: rgba(10, 8, 6, max(var(--bg-opacity), 0.6)); }
-body.composing .msg.faded { opacity: 0.8; }
-body.composing #chat { overflow-y: auto; }
-
-#compose { padding: 4px 6px 6px; }
-#compose[hidden] { display: none; }
-#compose-input {
-  width: 100%;
-  font: inherit;
-  color: #f4ede0;
-  background: rgba(12, 9, 6, 0.92);
-  border: 1px solid #b8893d;
-  border-radius: 3px;
-  padding: 4px 6px;
-  outline: none;
-}
-#suggest { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
-#suggest:empty { display: none; }
-#suggest .s {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 12px; color: #cdb98f;
-  background: rgba(20, 15, 10, 0.92);
-  border: 1px solid #5a4320; border-radius: 3px; padding: 1px 5px 1px 2px;
-}
-#suggest .s.sel { border-color: #ffd27a; color: #fff; }
-#suggest img { height: 24px; max-width: 64px; }
-
 .emote {
   display: inline-grid;
   vertical-align: middle;

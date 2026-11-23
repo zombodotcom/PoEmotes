@@ -27,9 +27,8 @@
       <label>Fade after (sec, 0 = never) <input name="fadeSeconds" type="number" min="0" max="3600" /></label>
       <label>Background opacity <input name="backgroundOpacity" type="range" min="0" max="1" step="0.05" /></label>
       <label class="check"><input name="showTimestamps" type="checkbox" /> Timestamps</label>
-      <label>Chat hotkey (in PoE, blank = off) <input name="chatHotkey" placeholder="Enter" /></label>
-      <label>Reply-to-whisper hotkey <input name="replyHotkey" placeholder="Ctrl+Enter" /></label>
-      <label>Open PoE's own chat (see items) <input name="nativeChatHotkey" placeholder="Shift+Enter" /></label>
+      <label class="check"><input name="emoteOnly" type="checkbox" /> Only show messages with emotes</label>
+      <label class="check"><input name="onlyWhenPoeFocused" type="checkbox" /> Hide when PoE isn't the active window</label>
       <fieldset>
         <legend>Channels</legend>
         <label class="check"><input name="ch-global" type="checkbox" /> # Global</label>
@@ -48,11 +47,6 @@
     </form>
 
     <div id="chat"></div>
-    <div id="compose" hidden>
-      <div id="suggest"></div>
-      <input id="compose-input" maxlength="500" spellcheck="false" autocomplete="off"
-             placeholder="Say something… (#global $trade %party &amp;guild @name) Tab = emote" />
-    </div>
     <div id="status"></div>
     <div id="grip" title="Drag to resize"></div>
   </div>
