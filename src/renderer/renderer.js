@@ -129,6 +129,7 @@ function applyConfig() {
   f.hideNpcs.checked = !!config.hideNpcs;
   f.chatHotkey.value = config.chatHotkey || '';
   f.replyHotkey.value = config.replyHotkey || '';
+  f.nativeChatHotkey.value = config.nativeChatHotkey || '';
   for (const k of Object.keys(config.channels)) f[`ch-${k}`].checked = config.channels[k];
   rerenderAll();
 }
@@ -282,6 +283,7 @@ settingsEl.addEventListener('submit', (ev) => {
     hideNpcs: f.hideNpcs.checked,
     chatHotkey: f.chatHotkey.value.trim(),
     replyHotkey: f.replyHotkey.value.trim(),
+    nativeChatHotkey: f.nativeChatHotkey.value.trim(),
     channels,
   });
 });

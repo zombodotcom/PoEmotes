@@ -14,7 +14,7 @@ const MapVirtualKeyW = user32.func('uint32_t __stdcall MapVirtualKeyW(uint32_t c
 const GetAsyncKeyState = user32.func('int16_t __stdcall GetAsyncKeyState(int vk)');
 
 const KEYUP = 0x0002;
-const VK = { LBUTTON: 0x01, RETURN: 0x0d, CONTROL: 0x11, MENU: 0x12, ESCAPE: 0x1b, A: 0x41, V: 0x56 };
+const VK = { LBUTTON: 0x01, RETURN: 0x0d, SHIFT: 0x10, CONTROL: 0x11, MENU: 0x12, ESCAPE: 0x1b, A: 0x41, V: 0x56 };
 
 // Returns { down, pressed } where pressed = went down since the previous call.
 function keyState(vk) {
@@ -54,4 +54,6 @@ function tap(vk, ...mods) {
   for (const m of mods.reverse()) key(m, true);
 }
 
-module.exports = { foregroundWindow, isPoeWindow, focusWindow, tap, keyState, VK };
+const release = (vk) => key(vk, true);
+
+module.exports = { foregroundWindow, isPoeWindow, focusWindow, tap, release, keyState, VK };

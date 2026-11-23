@@ -34,6 +34,7 @@ const DEFAULT_CONFIG = {
   npcNames: DEFAULT_NPCS,
   chatHotkey: 'Enter',
   replyHotkey: 'Ctrl+Enter',
+  nativeChatHotkey: 'Shift+Enter',
   bounds: null,
 };
 
@@ -141,10 +142,15 @@ function applyLock() {
 function setChatKeys(active) {
   if (active === chatKeysActive) return;
   chatKeysActive = active;
-  for (const [accel, reply] of [[config.chatHotkey, false], [config.replyHotkey, true]]) {
+  const keys = [
+    [config.chatHotkey, () => openCompose(false)],
+    [config.replyHotkey, () => openCompose(true)],
+    [config.nativeChatHotkey, openNativeChat],
+  ];
+  for (const [accel, handler] of keys) {
     if (!accel) continue;
     try {
-      if (active) globalShortcut.register(accel, () => openCompose(reply));
+      if (active) globalShortcut.register(accel, handler);
       else globalShortcut.unregister(accel);
     } catch (e) {
       send('status', `Bad hotkey "${accel}": ${e.message}`);
@@ -156,6 +162,18 @@ function setChatKeys(active) {
 // While that's open, Enter must reach PoE, so the chat hotkeys stand down until
 // the user sends (Enter) or cancels (Esc) it.
 let nativeChatOpen = false;
+let nativeChatSince = 0;
+
+// Opens PoE's real chat window (to hover/Ctrl+C linked items, or type natively).
+// The hotkeys stay off until that window is closed with Enter or Esc.
+function openNativeChat() {
+  nativeChatOpen = true;
+  nativeChatSince = Date.now();
+  setChatKeys(false);
+  const { VK } = win32;
+  for (const m of [VK.SHIFT, VK.CONTROL, VK.MENU]) win32.release(m); // hotkey modifiers are still held
+  win32.tap(VK.RETURN);
+}
 
 function watchForeground() {
   const { VK } = win32;
@@ -172,7 +190,8 @@ function watchForeground() {
       const ctrl = win32.keyState(VK.CONTROL).down;
       const alt = win32.keyState(VK.MENU).down;
       if (isPoe && (click.pressed || click.down) && ctrl && alt) nativeChatOpen = true;
-      else if (nativeChatOpen && (enter.pressed || esc.pressed || !isPoe)) nativeChatOpen = false;
+      else if (nativeChatOpen && Date.now() - nativeChatSince > 200 // ignore our own synthetic Enter
+        && (enter.pressed || esc.pressed || !isPoe)) nativeChatOpen = false;
     } catch { /* ignore */ }
     setChatKeys(isPoe && !sending && !composing && !nativeChatOpen);
   }, 30);
