@@ -11,8 +11,16 @@ const GetWindowTextW = user32.func('int __stdcall GetWindowTextW(void* hWnd, _Ou
 const keybd_event = user32.func('void __stdcall keybd_event(uint8_t vk, uint8_t scan, uint32_t flags, uintptr_t extra)');
 const MapVirtualKeyW = user32.func('uint32_t __stdcall MapVirtualKeyW(uint32_t code, uint32_t mapType)');
 
+const GetAsyncKeyState = user32.func('int16_t __stdcall GetAsyncKeyState(int vk)');
+
 const KEYUP = 0x0002;
-const VK = { RETURN: 0x0d, CONTROL: 0x11, A: 0x41, V: 0x56 };
+const VK = { LBUTTON: 0x01, RETURN: 0x0d, CONTROL: 0x11, MENU: 0x12, ESCAPE: 0x1b, A: 0x41, V: 0x56 };
+
+// Returns { down, pressed } where pressed = went down since the previous call.
+function keyState(vk) {
+  const s = GetAsyncKeyState(vk);
+  return { down: (s & 0x8000) !== 0, pressed: (s & 1) !== 0 };
+}
 
 function readString(fn, hwnd) {
   const buf = new Uint16Array(256);
@@ -46,4 +54,4 @@ function tap(vk, ...mods) {
   for (const m of mods.reverse()) key(m, true);
 }
 
-module.exports = { foregroundWindow, isPoeWindow, focusWindow, tap, VK };
+module.exports = { foregroundWindow, isPoeWindow, focusWindow, tap, keyState, VK };

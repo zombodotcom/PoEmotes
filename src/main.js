@@ -152,16 +152,30 @@ function setChatKeys(active) {
   }
 }
 
+// Ctrl+Alt+click on an item makes PoE open its own chat box with the link in it.
+// While that's open, Enter must reach PoE, so the chat hotkeys stand down until
+// the user sends (Enter) or cancels (Esc) it.
+let nativeChatOpen = false;
+
 function watchForeground() {
+  const { VK } = win32;
   setInterval(() => {
     let isPoe = false;
     try {
       const fg = win32.foregroundWindow();
       isPoe = win32.isPoeWindow(fg);
       if (isPoe) poeHwnd = fg;
+      // read every tick so the "pressed since last call" bits never go stale
+      const click = win32.keyState(VK.LBUTTON);
+      const enter = win32.keyState(VK.RETURN);
+      const esc = win32.keyState(VK.ESCAPE);
+      const ctrl = win32.keyState(VK.CONTROL).down;
+      const alt = win32.keyState(VK.MENU).down;
+      if (isPoe && (click.pressed || click.down) && ctrl && alt) nativeChatOpen = true;
+      else if (nativeChatOpen && (enter.pressed || esc.pressed || !isPoe)) nativeChatOpen = false;
     } catch { /* ignore */ }
-    setChatKeys(isPoe && !sending && !composing);
-  }, 150);
+    setChatKeys(isPoe && !sending && !composing && !nativeChatOpen);
+  }, 30);
 }
 
 function openCompose(reply) {
