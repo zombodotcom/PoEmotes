@@ -25,7 +25,7 @@ const DEFAULT_CONFIG = {
   logPath: '',
   twitchChannels: ['xqc', 'forsen', 'zizaran', 'quin69', 'sodapoppin', 'moonmoon', 'mathil1'],
   fontSize: 15,
-  fadeSeconds: 0,
+  fadeSeconds: 10,
   maxMessages: 150,
   backgroundOpacity: 0.8,
   showTimestamps: false,

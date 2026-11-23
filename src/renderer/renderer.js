@@ -118,6 +118,7 @@ function addMessages(list, backfill) {
   const max = (config && config.maxMessages) || 150;
   while (messages.length > max) messages.shift().el.remove();
   stickToBottom();
+  updateIdle();
 }
 
 function rerenderAll() {
@@ -169,7 +170,18 @@ poechat.on('lock', (l) => {
   stickToBottom();
 });
 
-setInterval(() => { const now = Date.now(); for (const e of messages) updateFade(e, now); }, 1000);
+// When every visible message has faded, fade the background too so the overlay
+// disappears completely, like PoE's own chat does.
+function updateIdle() {
+  const active = messages.some((e) => !e.el.hidden && !e.el.classList.contains('faded'));
+  document.body.classList.toggle('idle', !active);
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const e of messages) updateFade(e, now);
+  updateIdle();
+}, 500);
 
 // ---------- edit-mode UI ----------
 document.getElementById('btn-settings').onclick = () => { settingsEl.hidden = !settingsEl.hidden; };

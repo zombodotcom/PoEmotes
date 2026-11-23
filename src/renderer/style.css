@@ -30,8 +30,9 @@ html, body {
   background: rgba(10, 8, 6, var(--bg-opacity));
   border: 1px solid transparent;
   border-radius: 6px;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, background-color 1.2s ease;
 }
+body.locked.idle #frame { background-color: transparent; }
 body.revealed #frame { opacity: 0; }
 
 body.unlocked #frame {
