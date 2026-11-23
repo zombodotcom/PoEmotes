@@ -142,7 +142,7 @@ function applyLock() {
 // so it doesn't float over your browser or Discord.
 function updateVisibility() {
   if (!alive() || quitting) return;
-  const want = !userHidden && (!locked || !config.onlyWhenPoeFocused || poeFocused || overlayFocused);
+  const want = !userHidden && !revealed && (!locked || !config.onlyWhenPoeFocused || poeFocused || overlayFocused);
   if (want && !win.isVisible()) win.showInactive();
   else if (!want && win.isVisible()) win.hide();
 }
@@ -155,7 +155,7 @@ let revealed = false;
 
 function watchCursor() {
   timers.push(setInterval(() => {
-    if (!alive() || !win.isVisible()) return;
+    if (!alive() || quitting) return;
     let inside = false;
     if (locked && config.hoverReveal) {
       const p = screen.getCursorScreenPoint();
@@ -167,7 +167,9 @@ function watchCursor() {
     if (!inside) hoverSince = 0;
     // reveal after a short dwell; come back quickly once the cursor leaves
     const want = inside && now - hoverSince >= (Number(config.revealDelayMs) || 0);
-    if (want !== revealed) { revealed = want; send('reveal', revealed); }
+    // Actually hide the window (not just fade it) so nothing sits between the
+    // mouse and PoE; bounds still work while hidden so we know when the cursor leaves.
+    if (want !== revealed) { revealed = want; updateVisibility(); }
   }, 50));
 }
 
