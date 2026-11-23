@@ -27,13 +27,15 @@ const DEFAULT_CONFIG = {
   fontSize: 15,
   fadeSeconds: 30,
   maxMessages: 150,
-  backgroundOpacity: 0.35,
+  backgroundOpacity: 0.8,
   showTimestamps: false,
   channels: { global: true, trade: true, party: true, guild: true, whisper: true, local: true },
   hideNpcs: true,
   npcNames: DEFAULT_NPCS,
-  emoteOnly: true,
+  emoteOnly: false,
   onlyWhenPoeFocused: true,
+  hoverReveal: true,
+  revealDelayMs: 350,
   bounds: null,
 };
 
@@ -141,6 +143,30 @@ function updateVisibility() {
   else if (!want && win.isVisible()) win.hide();
 }
 
+// Hover-to-reveal: when the cursor rests on the overlay, fade it out so PoE's real
+// chat underneath (with hoverable/clickable item links) shows through. The overlay
+// stays click-through the whole time, so the mouse is already talking to PoE.
+let hoverSince = 0;
+let revealed = false;
+
+function watchCursor() {
+  setInterval(() => {
+    if (!win || !win.isVisible()) return;
+    let inside = false;
+    if (locked && config.hoverReveal) {
+      const p = screen.getCursorScreenPoint();
+      const b = win.getBounds();
+      inside = p.x >= b.x && p.x < b.x + b.width && p.y >= b.y && p.y < b.y + b.height;
+    }
+    const now = Date.now();
+    if (inside && !hoverSince) hoverSince = now;
+    if (!inside) hoverSince = 0;
+    // reveal after a short dwell; come back quickly once the cursor leaves
+    const want = inside && now - hoverSince >= (Number(config.revealDelayMs) || 0);
+    if (want !== revealed) { revealed = want; send('reveal', revealed); }
+  }, 50);
+}
+
 function watchForeground() {
   setInterval(() => {
     try {
@@ -212,6 +238,7 @@ ipcMain.on('quit', () => app.quit());
 app.whenReady().then(() => {
   createWindow();
   watchForeground();
+  watchCursor();
   globalShortcut.register('CommandOrControl+Shift+L', () => { locked = !locked; applyLock(); });
   globalShortcut.register('CommandOrControl+Shift+H', () => { userHidden = !userHidden; updateVisibility(); });
 });

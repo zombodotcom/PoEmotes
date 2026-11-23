@@ -30,7 +30,9 @@ html, body {
   background: rgba(10, 8, 6, var(--bg-opacity));
   border: 1px solid transparent;
   border-radius: 6px;
+  transition: opacity 0.15s ease;
 }
+body.revealed #frame { opacity: 0; }
 
 body.unlocked #frame {
   background: rgba(10, 8, 6, max(var(--bg-opacity), 0.72));

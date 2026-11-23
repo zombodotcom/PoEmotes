@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('poechat', {
   on: (channel, cb) => {
-    const allowed = ['messages', 'emotes', 'config', 'lock', 'status'];
+    const allowed = ['messages', 'emotes', 'config', 'lock', 'status', 'reveal'];
     if (allowed.includes(channel)) ipcRenderer.on(channel, (_e, payload) => cb(payload));
   },
   saveConfig: (partial) => ipcRenderer.send('save-config', partial),

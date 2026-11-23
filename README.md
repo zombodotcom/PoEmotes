@@ -15,12 +15,18 @@ Or double-click `start.bat`.
 
 ## How it works with PoE chat
 
-The overlay is an add-on and never touches your keyboard. PoE's own chat keeps working exactly as before: Enter, item links, hovering items, everything.
+The overlay never touches your keyboard. PoE's own chat keeps working exactly as before: Enter, typing, item links.
 
-- By default the overlay shows **only messages that contain emotes**, as a small feed. Place it wherever you like (next to or above PoE's chat). You can switch this off in Settings to mirror all of chat.
+**Recommended setup: cover PoE's chat.**
+1. Press Ctrl+Shift+L, then drag and resize the overlay so it sits exactly over PoE's chat box. Press Ctrl+Shift+L again to lock it.
+2. The overlay's dark see-through background (Settings → Background opacity) hides PoE's chat text underneath while you still see the game.
+3. **Hover the overlay** for a moment and it fades out, showing PoE's real chat underneath, so you can hover or click item links natively. Move the mouse away and it comes back.
+
+Other notes:
 - Type emotes as plain words in PoE chat (`KEKW`, `catJAM`, …). Anyone running the overlay sees them as images, and everyone else sees the text.
-- Hiding a channel in PoE's chat display doesn't stop it being logged, so you can hide global in PoE and still get its emotes in the overlay. Leaving a channel does stop it.
-- The overlay hides itself when PoE isn't the active window. You can change that in Settings.
+- Keep the channels you care about visible in PoE, since item links can only be hovered in PoE's own chat. Leaving a channel stops it being logged; hiding it in the chat filter doesn't.
+- Settings has "Only show messages with emotes" if you'd rather use the overlay as a small emote feed next to PoE's chat.
+- The overlay hides itself when PoE isn't the active window.
 
 ## Use
 

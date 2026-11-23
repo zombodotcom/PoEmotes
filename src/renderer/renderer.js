@@ -135,6 +135,7 @@ function applyConfig() {
   f.hideNpcs.checked = !!config.hideNpcs;
   f.emoteOnly.checked = !!config.emoteOnly;
   f.onlyWhenPoeFocused.checked = !!config.onlyWhenPoeFocused;
+  f.hoverReveal.checked = !!config.hoverReveal;
   for (const k of Object.keys(config.channels)) f[`ch-${k}`].checked = config.channels[k];
   rerenderAll();
 }
@@ -148,6 +149,7 @@ poechat.on('emotes', (e) => {
 });
 poechat.on('messages', ({ messages: list, backfill }) => addMessages(list, backfill));
 poechat.on('status', (s) => { statusEl.textContent = s; });
+poechat.on('reveal', (on) => document.body.classList.toggle('revealed', on));
 poechat.on('lock', (l) => {
   locked = l;
   document.body.classList.toggle('locked', l);
@@ -179,6 +181,7 @@ settingsEl.addEventListener('submit', (ev) => {
     hideNpcs: f.hideNpcs.checked,
     emoteOnly: f.emoteOnly.checked,
     onlyWhenPoeFocused: f.onlyWhenPoeFocused.checked,
+    hoverReveal: f.hoverReveal.checked,
     channels,
   });
 });
