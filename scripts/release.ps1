@@ -5,7 +5,9 @@ param(
     [Parameter(Mandatory = $true)][string]$Version,
     [string]$Notes = ""
 )
-$ErrorActionPreference = 'Stop'
+# Not 'Stop': Windows PowerShell treats anything a native tool prints to stderr as an
+# error, and the Tauri CLI logs its progress there. Exit codes are checked instead.
+$ErrorActionPreference = 'Continue'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
