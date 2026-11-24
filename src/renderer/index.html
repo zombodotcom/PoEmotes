@@ -2,15 +2,13 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
-  <title>PoE Chat Overlay</title>
+  <title>PoEmotes</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="locked">
   <div id="frame">
-    <div id="toolbar">
-      <span class="title">PoE Chat. Edit mode (Ctrl+Shift+L locks)</span>
+    <div id="toolbar" data-tauri-drag-region>
+      <span class="title" data-tauri-drag-region>PoEmotes. Edit mode (Ctrl+Shift+L locks)</span>
       <button id="btn-settings">Settings</button>
       <button id="btn-lock">Lock</button>
       <button id="btn-quit" class="danger">Quit</button>
@@ -23,7 +21,15 @@
       <label class="wide">Client.txt path (blank = auto-detect)
         <input name="logPath" placeholder="C:\Program Files (x86)\Steam\steamapps\common\Path of Exile\logs\Client.txt" />
       </label>
+      <label>Font <input name="fontFamily" list="fonts" placeholder="Segoe UI" />
+        <datalist id="fonts">
+          <option value="Segoe UI"></option><option value="Fontin SmallCaps"></option><option value="Georgia"></option>
+          <option value="Trebuchet MS"></option><option value="Verdana"></option><option value="Tahoma"></option>
+          <option value="Arial"></option><option value="Consolas"></option><option value="Comic Sans MS"></option>
+        </datalist>
+      </label>
       <label>Font size <input name="fontSize" type="number" min="9" max="40" /></label>
+      <label>Emote size <input name="emoteSize" type="range" min="1" max="4" step="0.1" /></label>
       <label>Fade after (sec, 0 = never) <input name="fadeSeconds" type="number" min="0" max="3600" /></label>
       <label>Background opacity <input name="backgroundOpacity" type="range" min="0" max="1" step="0.05" /></label>
       <label class="check"><input name="showTimestamps" type="checkbox" /> Timestamps</label>
@@ -51,6 +57,7 @@
     <div id="status"></div>
     <div id="grip" title="Drag to resize"></div>
   </div>
+  <script src="bridge.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

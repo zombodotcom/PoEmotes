@@ -1,43 +1,51 @@
-# PoE Chat Overlay
+# PoEmotes
 
-A transparent, click-through overlay that mirrors Path of Exile (1 & 2) chat with Twitch, BTTV, FFZ and 7TV emotes, including animated ones.
+Twitch, BTTV, FFZ and 7TV emotes (including animated ones) in Path of Exile chat, for PoE 1 and PoE 2.
 
-It reads the game's `logs/Client.txt` as new lines arrive, so it never touches the game client.
+PoEmotes is a small transparent overlay that sits on top of PoE's chat box. It reads the game's `logs/Client.txt` as new lines arrive. It never touches the game client: no memory reading, no packet sniffing, no injected input.
 
-## Run
+## Install
 
-```
-npm install
-npm start
-```
+Download `PoEmotes_x.y.z_x64-setup.exe` (about 2 MB) from Releases, or the standalone `poemotes.exe` (about 5 MB, no install needed). It uses Windows' built-in WebView2, which Windows 10 and 11 already have.
 
-Or double-click `start.bat`.
+Run PoE in **Windowed Fullscreen** or **Windowed**. Exclusive fullscreen draws over every overlay.
 
-## How it works with PoE chat
+## Setup
 
-The overlay never touches your keyboard. PoE's own chat keeps working exactly as before: Enter, typing, item links.
+1. Right-click the tray icon and choose **Move / resize**, or press **Ctrl+Shift+L**.
+2. Drag the title bar and the corner grip so the overlay sits exactly over PoE's chat box, then press Ctrl+Shift+L again to lock it.
+3. The dark see-through background covers PoE's chat text underneath. Messages fade after 10 seconds, like the in-game chat.
+4. **Hover the overlay** for a moment and it disappears, so you can hover and click item links in PoE's real chat. Move the mouse away and it comes back.
 
-**Recommended setup: cover PoE's chat.**
-1. Press Ctrl+Shift+L, then drag and resize the overlay so it sits exactly over PoE's chat box. Press Ctrl+Shift+L again to lock it.
-2. The overlay's dark see-through background (Settings → Background opacity) hides PoE's chat text underneath while you still see the game.
-3. **Hover the overlay** for a moment and it fades out, showing PoE's real chat underneath, so you can hover or click item links natively. Move the mouse away and it comes back.
+Type emotes as plain words in PoE chat (`KEKW`, `catJAM`, …). Anyone running PoEmotes sees them as images, and everyone else sees the text.
 
-Other notes:
-- Type emotes as plain words in PoE chat (`KEKW`, `catJAM`, …). Anyone running the overlay sees them as images, and everyone else sees the text.
-- Keep the channels you care about visible in PoE, since item links can only be hovered in PoE's own chat. Leaving a channel stops it being logged; hiding it in the chat filter doesn't.
-- Settings has "Only show messages with emotes" if you'd rather use the overlay as a small emote feed next to PoE's chat.
-- The overlay hides itself when PoE isn't the active window.
+## Controls
 
-## Use
-
-- **Ctrl+Shift+L**: switch edit mode on or off. In edit mode you can drag the title bar to move the overlay, drag the corner grip to resize it, open Settings, or quit. Locked mode is click-through.
+- **Tray icon**: Settings, Move / resize, Hide / show, Reload emotes, Quit.
+- **Ctrl+Shift+L**: edit mode (move, resize, settings). The overlay is click-through while locked.
 - **Ctrl+Shift+H**: hide or show the overlay.
-- Run PoE in **Windowed Fullscreen** (or Windowed). Exclusive fullscreen draws over every overlay.
 
 ## Settings
 
-- **Twitch channels**: add streamers (e.g. `zizaran, ghazzy`) to load their BTTV, FFZ and 7TV channel emotes on top of the global sets.
-- **Client.txt path**: leave blank to auto-detect Steam or standalone installs of PoE 1 and PoE 2.
-- Font size, fade time, background opacity, timestamps, per-channel filters, and hiding NPC dialogue.
+- **Twitch channels**: streamers whose BTTV, FFZ and 7TV channel emotes to load on top of the global sets.
+- **Client.txt path**: leave blank to auto-detect Steam and standalone installs of PoE 1 and PoE 2.
+- Font, font size, emote size, fade time, background opacity, timestamps, per-channel filters, hide NPC dialogue, only show messages with emotes, hide when PoE isn't the active window.
 
-Config and the emote cache are stored in `%APPDATA%\poechat\`.
+Settings and the emote cache are stored in `%APPDATA%\PoEmotes\`.
+
+## Notes
+
+- Keep the channels you care about visible in PoE, because item links can only be hovered in PoE's own chat.
+- Leaving a channel stops it being logged. Hiding it in PoE's chat filter doesn't.
+
+## Build
+
+Needs Rust and Node.
+
+```
+npm install
+npm run build    # src-tauri/target/release/poemotes.exe and an NSIS installer
+npm run dev      # run with live reload of the frontend
+```
+
+Built with [Tauri](https://tauri.app). Not affiliated with Grinding Gear Games.

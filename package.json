@@ -1,15 +1,14 @@
 {
-  "name": "poechat",
+  "name": "poemotes",
   "version": "1.0.0",
   "description": "Path of Exile chat overlay with Twitch / BTTV / FFZ / 7TV emotes",
-  "main": "src/main.js",
   "scripts": {
-    "start": "electron ."
+    "dev": "tauri dev",
+    "build": "tauri build"
   },
+  "author": "zombodotcom",
+  "license": "MIT",
   "devDependencies": {
-    "electron": "^39.0.0"
-  },
-  "dependencies": {
-    "koffi": "^3.3.8"
+    "@tauri-apps/cli": "^2.12.6"
   }
 }

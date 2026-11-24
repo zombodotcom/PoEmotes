@@ -1,5 +1,7 @@
 :root {
   --font-size: 15px;
+  --font-family: "Segoe UI";
+  --emote-size: 1.9em;
   --bg-opacity: 0;
   --c-global: #ff6b5e;
   --c-trade: #ffa24a;
@@ -16,7 +18,7 @@ html, body {
   height: 100%;
   background: transparent;
   overflow: hidden;
-  font-family: "Segoe UI", "Fontin SmallCaps", system-ui, sans-serif;
+  font-family: var(--font-family), "Segoe UI", system-ui, sans-serif;
   font-size: var(--font-size);
   color: #eee;
   user-select: none;
@@ -87,6 +89,7 @@ button.danger { border-color: #8a3a2a; color: #ffb0a0; }
 #settings label.wide, #settings fieldset, #settings .row { grid-column: 1 / -1; }
 #settings label.check { flex-direction: row; align-items: center; gap: 4px; }
 #settings fieldset { display: flex; flex-wrap: wrap; gap: 4px 12px; border: 1px solid #5a4320; color: #cdb98f; }
+#settings, #toolbar { font-family: "Segoe UI", system-ui, sans-serif; }
 #settings input:not([type=checkbox]) {
   background: #120d08; color: #eee; border: 1px solid #5a4320; padding: 3px 5px; font-size: 12px;
 }
@@ -155,8 +158,8 @@ body.unlocked .msg.faded { opacity: 0.55; }
 }
 .emote img {
   grid-area: 1 / 1;
-  height: 1.9em;
-  max-width: 6em;
+  height: var(--emote-size);
+  max-width: calc(var(--emote-size) * 3.2);
   object-fit: contain;
   place-self: center;
   filter: drop-shadow(0 0 1px rgba(0,0,0,0.6));

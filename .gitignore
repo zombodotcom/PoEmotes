@@ -1,2 +1,5 @@
 node_modules/
 *.log
+dist/
+src-tauri/target/
+src-tauri/gen/

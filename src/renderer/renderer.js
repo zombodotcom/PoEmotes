@@ -136,10 +136,15 @@ function rerenderAll() {
 function applyConfig() {
   document.documentElement.style.setProperty('--font-size', `${config.fontSize}px`);
   document.documentElement.style.setProperty('--bg-opacity', config.backgroundOpacity);
+  const family = String(config.fontFamily || 'Segoe UI').replace(/["\\;{}]/g, '');
+  document.documentElement.style.setProperty('--font-family', `"${family}"`);
+  document.documentElement.style.setProperty('--emote-size', `${Number(config.emoteSize) || 1.9}em`);
   const f = settingsEl.elements;
   f.twitchChannels.value = (config.twitchChannels || []).join(', ');
   f.logPath.value = config.logPath || '';
   f.fontSize.value = config.fontSize;
+  f.fontFamily.value = config.fontFamily || '';
+  f.emoteSize.value = config.emoteSize;
   f.fadeSeconds.value = config.fadeSeconds;
   f.backgroundOpacity.value = config.backgroundOpacity;
   f.showTimestamps.checked = !!config.showTimestamps;
@@ -160,6 +165,7 @@ poechat.on('emotes', (e) => {
 });
 poechat.on('messages', ({ messages: list, backfill }) => addMessages(list, backfill));
 poechat.on('status', (s) => { statusEl.textContent = s; });
+poechat.on('open-settings', () => { settingsEl.hidden = false; });
 poechat.on('reveal', (on) => document.body.classList.toggle('revealed', on));
 poechat.on('lock', (l) => {
   locked = l;
@@ -198,6 +204,8 @@ settingsEl.addEventListener('submit', (ev) => {
     twitchChannels: f.twitchChannels.value.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean),
     logPath: f.logPath.value.trim().replace(/^"|"$/g, ''),
     fontSize: Math.min(40, Math.max(9, Number(f.fontSize.value) || 15)),
+    fontFamily: f.fontFamily.value.trim() || 'Segoe UI',
+    emoteSize: Math.min(4, Math.max(1, Number(f.emoteSize.value) || 1.9)),
     fadeSeconds: Math.max(0, Number(f.fadeSeconds.value) || 0),
     backgroundOpacity: Number(f.backgroundOpacity.value),
     showTimestamps: f.showTimestamps.checked,
@@ -224,3 +232,5 @@ grip.addEventListener('pointerdown', (ev) => {
   grip.addEventListener('pointermove', move);
   grip.addEventListener('pointerup', up);
 });
+
+poechat.ready();
