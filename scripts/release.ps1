@@ -14,7 +14,7 @@ if (-not (Test-Path $key)) { throw "Signing key not found at $key" }
 
 # bump the version everywhere it lives
 (Get-Content src-tauri\tauri.conf.json -Raw) -replace '(?m)^  "version": ".*?"', "  `"version`": `"$Version`"" | Set-Content src-tauri\tauri.conf.json -Encoding ascii -NoNewline
-(Get-Content src-tauri\Cargo.toml -Raw) -replace '(?m)^version = ".*"', "version = `"$Version`"" | Set-Content src-tauri\Cargo.toml -Encoding utf8 -NoNewline
+(Get-Content src-tauri\Cargo.toml -Raw) -replace '(?m)^version = ".*"', "version = `"$Version`"" | Set-Content src-tauri\Cargo.toml -Encoding ascii -NoNewline
 npm pkg set version=$Version | Out-Null
 
 $env:TAURI_SIGNING_PRIVATE_KEY = Get-Content -Raw $key
