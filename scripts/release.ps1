@@ -13,9 +13,7 @@ $key = "$env:USERPROFILE\.tauri\poemotes.key"
 if (-not (Test-Path $key)) { throw "Signing key not found at $key" }
 
 # bump the version everywhere it lives
-$conf = Get-Content src-tauri\tauri.conf.json -Raw | ConvertFrom-Json
-$conf.version = $Version
-$conf | ConvertTo-Json -Depth 20 | Set-Content src-tauri\tauri.conf.json -Encoding utf8
+(Get-Content src-tauri\tauri.conf.json -Raw) -replace '(?m)^  "version": ".*?"', "  `"version`": `"$Version`"" | Set-Content src-tauri\tauri.conf.json -Encoding ascii -NoNewline
 (Get-Content src-tauri\Cargo.toml -Raw) -replace '(?m)^version = ".*"', "version = `"$Version`"" | Set-Content src-tauri\Cargo.toml -Encoding utf8 -NoNewline
 npm pkg set version=$Version | Out-Null
 
