@@ -90,6 +90,7 @@ button.danger { border-color: #8a3a2a; color: #ffb0a0; }
 #settings label.check { flex-direction: row; align-items: center; gap: 4px; }
 #settings fieldset { display: flex; flex-wrap: wrap; gap: 4px 12px; border: 1px solid #5a4320; color: #cdb98f; }
 #settings, #toolbar { font-family: "Segoe UI", system-ui, sans-serif; }
+#settings input[type=color] { padding: 0; height: 22px; width: 48px; }
 #settings input:not([type=checkbox]) {
   background: #120d08; color: #eee; border: 1px solid #5a4320; padding: 3px 5px; font-size: 12px;
 }
@@ -141,6 +142,9 @@ body.unlocked .msg.faded { opacity: 0.55; }
 .msg .prefix { margin-right: 2px; }
 .msg .guild { opacity: 0.85; margin-right: 3px; }
 .msg .name { font-weight: 600; }
+.msg .name.friend { color: var(--friend-color, #ffd75e); }
+.currency { display: inline-block; vertical-align: middle; margin: -0.25em 1px; }
+.currency img { height: 1.35em; width: auto; vertical-align: middle; filter: drop-shadow(0 0 1px #000); }
 
 .msg.global  { color: var(--c-global); }
 .msg.trade   { color: var(--c-trade); }

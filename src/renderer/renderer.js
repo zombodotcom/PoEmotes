@@ -5,6 +5,7 @@ const settingsEl = document.getElementById('settings');
 const emoteCountEl = document.getElementById('emote-count');
 
 let config = null;
+let friends = new Set(); // lowercased names
 let emotes = {};
 let locked = true;
 const messages = []; // { msg, el, shownAt }
@@ -35,10 +36,64 @@ function emoteImg(code, e) {
   return img;
 }
 
+// ---------- currency icons ----------
+const CUR_BASE = 'https://web.poecdn.com/image/Art/2DItems/Currency/';
+const CURRENCY = {};
+// [icon file, name, words that always count, words that only count next to a number]
+for (const [file, name, always, numOnly] of [
+  ['CurrencyModValues', 'Divine Orb', ['div', 'divs', 'divine', 'divines'], ['d']],
+  ['CurrencyRerollRare', 'Chaos Orb', ['chaos'], ['c']],
+  ['CurrencyAddModToRare', 'Exalted Orb', ['exalt', 'exalts', 'exalted', 'exa'], ['ex']],
+  ['CurrencyDuplicate', 'Mirror of Kalandra', ['mirror', 'mirrors'], ['mirr']],
+  ['CurrencyUpgradeToRare', 'Orb of Alchemy', ['alch', 'alchs', 'alchemy'], []],
+  ['CurrencyRerollSocketLinks', 'Orb of Fusing', ['fusing', 'fusings', 'fuses'], ['fuse', 'fus']],
+  ['CurrencyRerollSocketNumbers', "Jeweller's Orb", ['jewellers', 'jeweller', "jeweller's"], ['jew', 'jews']],
+  ['CurrencyRerollSocketColours', 'Chromatic Orb', ['chrome', 'chromes', 'chromatic', 'chromatics'], ['chrom']],
+  ['CurrencyUpgradeMagicToRare', 'Regal Orb', ['regal', 'regals'], []],
+  ['CurrencyVaal', 'Vaal Orb', [], ['vaal', 'vaals']],
+  ['CurrencyConvertToNormal', 'Orb of Scouring', ['scour', 'scours', 'scouring'], []],
+  ['AnnullOrb', 'Orb of Annulment', ['annul', 'annuls', 'annulment', 'annulments'], []],
+  ['CurrencyRerollMagic', 'Orb of Alteration', ['alts', 'alteration', 'alterations'], ['alt']],
+  ['CurrencyGemQuality', "Gemcutter's Prism", ['gcp', 'gcps'], []],
+  ['CurrencyPassiveSkillRefund', 'Orb of Regret', ['regrets'], ['regret']],
+  ['CurrencyUpgradeToMagic', 'Orb of Transmutation', ['transmute', 'transmutes'], ['trans']],
+  ['CurrencyIdentification', 'Scroll of Wisdom', [], ['wisdom', 'wisdoms', 'wis']],
+]) {
+  for (const w of always) CURRENCY[w] = { url: `${CUR_BASE}${file}.png`, name, num: false };
+  for (const w of numOnly) CURRENCY[w] = { url: `${CUR_BASE}${file}.png`, name, num: true };
+}
+const NUM_RE = /^\d+(?:[.,]\d+)?[kx]?$/i;
+const CUR_RE = /^(\d+(?:[.,]\d+)?)?([a-z']+)([.,!?;:)]*)$/i;
+
+// "150c" -> 150 + icon, "div" -> icon. Short words like "c" only count next to a number.
+function currencyNodes(tok, prevNumeric) {
+  const m = CUR_RE.exec(tok);
+  if (!m) return null;
+  const [, num, word, punct] = m;
+  const c = CURRENCY[word.toLowerCase()];
+  if (!c) return null;
+  if (c.num && !num && !prevNumeric) return null;
+  const nodes = [];
+  if (num) nodes.push(document.createTextNode(num));
+  const wrap = span('currency');
+  const img = document.createElement('img');
+  img.src = c.url;
+  img.alt = word;
+  img.title = c.name;
+  img.draggable = false;
+  img.onerror = () => { wrap.replaceWith(document.createTextNode(word)); };
+  wrap.appendChild(img);
+  nodes.push(wrap);
+  if (punct) nodes.push(document.createTextNode(punct));
+  return nodes;
+}
+
 function renderText(text) {
   const out = span('text');
   let lastEmote = null; // the emote wrapper zero-width emotes stack onto
   let pendingSpace = null;
+  let prevNumeric = false;
+  const currency = !config || config.currencyIcons !== false;
   for (const tok of text.split(/(\s+)/)) {
     if (!tok) continue;
     if (/^\s+$/.test(tok)) {
@@ -56,9 +111,12 @@ function renderText(text) {
       out.appendChild(wrap);
       lastEmote = wrap;
     } else {
-      out.appendChild(document.createTextNode(tok));
+      const cur = currency && currencyNodes(tok, prevNumeric);
+      if (cur) cur.forEach((n) => out.appendChild(n));
+      else out.appendChild(document.createTextNode(tok));
       lastEmote = null;
     }
+    prevNumeric = NUM_RE.test(tok);
     pendingSpace = null;
   }
   return out;
@@ -70,7 +128,7 @@ function renderMessage(m) {
   if (config && config.showTimestamps) el.appendChild(span('ts', m.time));
   if (PREFIX[m.channel]) el.appendChild(span('prefix', PREFIX[m.channel]));
   if (m.guild) el.appendChild(span('guild', `<${m.guild}>`));
-  el.appendChild(span('name', m.name));
+  el.appendChild(span(friends.has(m.name.toLowerCase()) ? 'name friend' : 'name', m.name));
   el.appendChild(document.createTextNode(': '));
   el.appendChild(renderText(m.text));
   return el;
@@ -138,6 +196,8 @@ function applyConfig() {
   document.documentElement.style.setProperty('--bg-opacity', config.backgroundOpacity);
   const family = String(config.fontFamily || 'Segoe UI').replace(/["\\;{}]/g, '');
   document.documentElement.style.setProperty('--font-family', `"${family}"`);
+  friends = new Set((config.friends || []).map((n) => String(n).trim().toLowerCase()).filter(Boolean));
+  if (/^#[0-9a-f]{6}$/i.test(config.friendColor || '')) document.documentElement.style.setProperty('--friend-color', config.friendColor);
   document.documentElement.style.setProperty('--emote-size', `${Number(config.emoteSize) || 1.9}em`);
   const f = settingsEl.elements;
   f.twitchChannels.value = (config.twitchChannels || []).join(', ');
@@ -150,6 +210,9 @@ function applyConfig() {
   f.showTimestamps.checked = !!config.showTimestamps;
   f.hideNpcs.checked = !!config.hideNpcs;
   f.emoteOnly.checked = !!config.emoteOnly;
+  f.currencyIcons.checked = config.currencyIcons !== false;
+  f.friends.value = (config.friends || []).join(', ');
+  f.friendColor.value = config.friendColor || '#ffd75e';
   f.onlyWhenPoeFocused.checked = !!config.onlyWhenPoeFocused;
   f.hoverReveal.checked = !!config.hoverReveal;
   for (const k of Object.keys(config.channels)) f[`ch-${k}`].checked = config.channels[k];
@@ -211,6 +274,9 @@ settingsEl.addEventListener('submit', (ev) => {
     showTimestamps: f.showTimestamps.checked,
     hideNpcs: f.hideNpcs.checked,
     emoteOnly: f.emoteOnly.checked,
+    currencyIcons: f.currencyIcons.checked,
+    friends: f.friends.value.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean),
+    friendColor: f.friendColor.value,
     onlyWhenPoeFocused: f.onlyWhenPoeFocused.checked,
     hoverReveal: f.hoverReveal.checked,
     channels,

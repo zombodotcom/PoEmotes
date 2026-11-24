@@ -29,6 +29,8 @@ Type emotes as plain words in PoE chat (`KEKW`, `catJAM`, …). Anyone running P
 
 - **Twitch channels**: streamers whose BTTV, FFZ and 7TV channel emotes to load on top of the global sets.
 - **Client.txt path**: leave blank to auto-detect Steam and standalone installs of PoE 1 and PoE 2.
+- **Currency icons**: `div`, `150c`, `2 ex` and similar show the currency orb. Short words like `c` and `ex` only count next to a number.
+- **Friends**: names listed here show in their own colour.
 - Font, font size, emote size, fade time, background opacity, timestamps, per-channel filters, hide NPC dialogue, only show messages with emotes, hide when PoE isn't the active window.
 
 Settings and the emote cache are stored in `%APPDATA%\PoEmotes\`.
