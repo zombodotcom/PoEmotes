@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoEmotes: Twitch emotes in Path of Exile chat</title>
+<meta name="description" content="A 2 MB overlay that shows Twitch, BTTV, FFZ and 7TV emotes (animated too) in Path of Exile 1 and 2 chat. Reads Client.txt only and never touches the game." />
+<meta property="og:title" content="PoEmotes" />
+<meta property="og:description" content="Twitch, BTTV, FFZ and 7TV emotes in Path of Exile chat." />
+<link rel="icon" href="icon.png" />
+<style>
+  :root {
+    --bg: #0e0b08; --panel: #17120c; --line: #3a2c18; --gold: #e8c36e; --gold-dim: #b8893d;
+    --text: #efe6d6; --muted: #a8977a;
+    --c-global: #ff6b5e; --c-trade: #ffa24a; --c-party: #57a6ff; --c-guild: #7ee08a; --c-whisper: #e07bff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  a { color: var(--gold); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header { padding: 56px 0 24px; text-align: center; }
+  .brand { display: inline-flex; align-items: center; gap: 14px; }
+  .brand img { width: 64px; height: 64px; border-radius: 14px; }
+  h1 { font-size: 52px; margin: 0; letter-spacing: -1px; color: var(--gold); }
+  .tag { font-size: 21px; color: var(--text); margin: 12px auto 4px; max-width: 640px; }
+  .sub { color: var(--muted); margin: 0 auto 28px; max-width: 620px; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 8px; font-weight: 600; text-decoration: none; border: 1px solid var(--gold-dim); }
+  .btn.primary { background: linear-gradient(#e8c36e, #c79a45); color: #1a1209; border-color: #e8c36e; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.ghost { color: var(--gold); }
+  .btn.ghost:hover { background: #1f180f; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 10px; }
+
+  /* ---------- demo ---------- */
+  .demo-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin: 40px 0 10px; }
+  .demo-head h2 { margin: 0; }
+  .demo-head p { margin: 0; color: var(--muted); font-size: 14px; }
+  .scene {
+    position: relative; height: 440px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line);
+    background:
+      radial-gradient(ellipse at 70% 30%, rgba(255,140,50,0.18), transparent 45%),
+      radial-gradient(ellipse at 25% 80%, rgba(80,120,200,0.12), transparent 50%),
+      repeating-linear-gradient(35deg, #1b1711 0 26px, #201b14 26px 52px),
+      #15110c;
+  }
+  .scene::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6)); pointer-events: none; }
+  .hud { position: absolute; right: 18px; bottom: 16px; color: #d8c8a8; font-size: 12px; opacity: 0.6; z-index: 1; }
+
+  .chatbox { position: absolute; left: 18px; bottom: 18px; width: min(520px, calc(100% - 36px)); height: 250px; padding: 6px 10px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; z-index: 2; }
+  /* PoE's own chat, underneath */
+  .poe { font-family: Georgia, "Times New Roman", serif; font-size: 15px; color: #d6d0c4; }
+  .poe .l { line-height: 1.5; text-shadow: 0 0 3px #000; }
+  .poe { opacity: 0; transition: opacity 0.15s; }
+  .scene.revealed .poe { opacity: 1; }
+  /* the overlay, on top */
+  .ovl { background: rgba(10,8,6,0.8); border-radius: 6px; transition: opacity 0.15s, background-color 0.1s; cursor: default; font-size: 15px; }
+  .ovl.idle { background-color: transparent; transition: opacity 0.15s, background-color 1.2s; }
+  .ovl.revealed { opacity: 0; }
+  .msg { line-height: 1.45; padding: 1px 0; overflow-wrap: anywhere; text-shadow: 0 0 2px #000, 1px 1px 2px #000; transition: opacity 1.2s; }
+  .msg.faded { opacity: 0; }
+  .msg .name { font-weight: 600; }
+  .msg .guild { opacity: 0.85; margin-right: 3px; }
+  .msg .text { color: #f4ede0; }
+  .global { color: var(--c-global); } .trade { color: var(--c-trade); } .party { color: var(--c-party); }
+  .guildc { color: var(--c-guild); } .whisper, .whisper .text { color: var(--c-whisper); }
+  .emote { display: inline-grid; vertical-align: middle; margin: -0.3em 1px; }
+  .emote img { grid-area: 1 / 1; height: 1.9em; max-width: 6em; object-fit: contain; place-self: center; }
+  .hint { position: absolute; left: 18px; top: 14px; z-index: 3; font-size: 13px; color: var(--gold); background: rgba(14,11,8,0.85); border: 1px solid var(--line); padding: 4px 10px; border-radius: 20px; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .compare .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .compare h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .compare .plain { font-family: Georgia, serif; color: #d6d0c4; }
+
+  /* ---------- sections ---------- */
+  section { padding: 44px 0 8px; }
+  h2 { font-size: 28px; margin: 0 0 16px; color: var(--gold); }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .step { font-size: 13px; font-weight: 700; color: var(--gold); letter-spacing: 0.08em; }
+  kbd { background: #261d12; border: 1px solid #4a3920; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font: 13px Consolas, monospace; color: var(--text); }
+  ul.features { columns: 2; column-gap: 32px; padding-left: 20px; margin: 0; }
+  ul.features li { margin-bottom: 8px; break-inside: avoid; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 8px 0 2px; }
+  .safe { border-left: 3px solid var(--c-guild); }
+  footer { padding: 48px 0 40px; color: var(--muted); font-size: 13px; text-align: center; }
+
+  @media (max-width: 760px) {
+    h1 { font-size: 40px; }
+    .grid3, .compare { grid-template-columns: 1fr; }
+    ul.features { columns: 1; }
+    .scene { height: 400px; }
+  }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="brand"><img src="icon.png" alt="" /><h1>PoEmotes</h1></div>
+  <p class="tag">Twitch, BTTV, FFZ and 7TV emotes in Path of Exile chat. Animated ones too.</p>
+  <p class="sub">A tiny transparent overlay that sits on PoE's chat box. Type <code>KEKW</code> in chat and everyone running PoEmotes sees the emote. Works with PoE 1 and PoE 2.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/zombodotcom/PoEmotes/releases/latest">Download for Windows</a>
+    <a class="btn ghost" href="https://github.com/zombodotcom/PoEmotes">Source on GitHub</a>
+  </div>
+  <div class="meta">2 MB installer or 5 MB standalone exe · Windows 10/11 · free and open source (MIT)</div>
+</header>
+
+<main class="wrap">
+  <div class="demo-head">
+    <h2>See it in action</h2>
+    <p>Live demo. Hover the chat to see PoE's real chat underneath, which is how you click item links.</p>
+  </div>
+  <div class="scene" id="scene">
+    <span class="hint" id="hint">Hover the chat ↓</span>
+    <div class="chatbox poe" id="poe" aria-hidden="true"></div>
+    <div class="chatbox ovl" id="ovl"></div>
+    <div class="hud">Messages fade after 10 seconds, like the in-game chat</div>
+  </div>
+  <div class="compare">
+    <div class="card"><h3>Everyone else sees</h3><div class="plain">#Kaetheria: just dropped a mirror KEKW catJAM</div></div>
+    <div class="card"><h3>You see, with PoEmotes</h3><div class="msg global" id="cmp"></div></div>
+  </div>
+
+  <section>
+    <h2>How it works</h2>
+    <div class="grid3">
+      <div class="card"><div class="step">STEP 1</div><h3>Install and run</h3><p>PoEmotes finds your <code>Client.txt</code> automatically for Steam and standalone installs of PoE 1 and 2, then sits in your tray.</p></div>
+      <div class="card"><div class="step">STEP 2</div><h3>Line it up</h3><p>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, drag the overlay over PoE's chat box, resize it, then press it again to lock. It becomes click-through.</p></div>
+      <div class="card"><div class="step">STEP 3</div><h3>Chat like normal</h3><p>Type in PoE exactly as you always do. Emote words turn into emotes on the overlay. Hover it to get PoE's chat and item links back.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>It never touches the game</h2>
+    <div class="card safe">
+      <p style="color:var(--text)">PoE writes every chat message to <code>logs/Client.txt</code>. PoEmotes only reads that file, the same way trade-whisper helpers do. No memory reading, no packet sniffing, no injected input, no modified game files. Your keyboard and mouse go straight to PoE.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Features</h2>
+    <ul class="features">
+      <li>Global Twitch emotes plus BTTV, FFZ and 7TV global sets</li>
+      <li>Add any streamer's channel emotes (Zizaran, Quin69, your own…)</li>
+      <li>Animated emotes and 7TV zero-width emotes that stack</li>
+      <li>Hover to reveal PoE's chat, so item links still work</li>
+      <li>Fades like the in-game chat, and goes fully invisible when idle</li>
+      <li>Global, trade, party, guild, whisper and local filters</li>
+      <li>Hides NPC dialogue</li>
+      <li>"Only show messages with emotes" mode</li>
+      <li>Font, font size, emote size, opacity and timestamp settings</li>
+      <li>Tray icon, hotkeys and built-in auto-updates</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>FAQ</h2>
+    <details><summary>Do my friends need PoEmotes to see my emotes?</summary><p>Yes. Without it they see the word, like <code>KEKW</code>. Anyone running PoEmotes sees the image.</p></details>
+    <details><summary>Can I still click item links?</summary><p>Yes. Rest the mouse on the overlay for a moment and it disappears, leaving PoE's own chat with its item links. Move away and it comes back. The overlay can't show item tooltips itself, because item details aren't in Client.txt.</p></details>
+    <details><summary>The overlay doesn't show over the game</summary><p>Set PoE to <b>Windowed Fullscreen</b> or <b>Windowed</b> in Options → Graphics. Exclusive fullscreen draws over every overlay.</p></details>
+    <details><summary>Where are my settings?</summary><p>Right-click the tray icon and choose Settings. They're saved in <code>%APPDATA%\PoEmotes</code>.</p></details>
+    <details><summary>Windows SmartScreen warns me when I run it</summary><p>The app isn't code-signed yet, so Windows doesn't recognise it. Click "More info" and then "Run anyway". The source is on GitHub if you'd rather build it yourself.</p></details>
+    <details><summary>Does it work on PoE 2?</summary><p>Yes. It auto-detects whichever game wrote to its log most recently, or you can set the Client.txt path in settings.</p></details>
+  </section>
+</main>
+
+<footer class="wrap">
+  PoEmotes is a fan project and is not affiliated with or endorsed by Grinding Gear Games, Twitch, BTTV, FrankerFaceZ or 7TV.<br />
+  Emotes belong to their creators. MIT licensed · <a href="https://github.com/zombodotcom/PoEmotes">GitHub</a>
+</footer>
+
+<script>
+const E = {
+  KEKW: 'https://cdn.7tv.app/emote/01F61B1440000991F7SWQNMVX7/2x.webp',
+  catJAM: 'https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/2x.webp',
+  PogU: 'https://cdn.7tv.app/emote/01F6M3N17G000B5V5G2M2RYJN7/2x.webp',
+  OMEGALUL: 'https://cdn.betterttv.net/frankerfacez_emote/128054/2',
+  Sadge: 'https://cdn.7tv.app/emote/01FHNBZRW8000C3ZWT2Z63JS92/2x.webp',
+  monkaS: 'https://cdn.betterttv.net/frankerfacez_emote/130762/2',
+  peepoHappy: 'https://cdn.7tv.app/emote/01EZPQR1A00002RYT500A3PHPP/2x.webp',
+  EZ: 'https://cdn.7tv.app/emote/01F9FS6EEG0006XXD6DX0K9Y04/2x.webp',
+  Clap: 'https://cdn.7tv.app/emote/01GJ67HAJ8000E31RK552RQSKY/2x.webp',
+  pepeLaugh: 'https://cdn.betterttv.net/emote/653fbbb77080a9fc246a1144/2x.webp',
+  Kappa: 'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark/2.0',
+  modCheck: 'https://cdn.7tv.app/emote/01F6FTE8B80008E39HFFQJ7MWS/2x.webp',
+  Aware: 'https://cdn.7tv.app/emote/01FFWH9WV80000JT8GHDKHJNZC/2x.webp',
+  ICANT: 'https://cdn.7tv.app/emote/01FA0PBXM8000AD7Y8T9ZMTFZ5/2x.webp',
+  Okayge: 'https://cdn.7tv.app/emote/01F1371Z180009V7MP006J8KYG/2x.webp',
+  peepoClap: 'https://cdn.7tv.app/emote/01FKBMKHR8000CCCJ7DMGD13WW/2x.webp',
+  WAYTOODANK: 'https://cdn.betterttv.net/emote/6029f5d082b7c45eb1c948c7/2x.webp',
+  pepeD: 'https://cdn.7tv.app/emote/01F2ZWD6CR000DSBG200DM9SGM/2x.webp',
+  Stare: 'https://cdn.7tv.app/emote/01FX5KE5T0000B09ZDT0P8Q1W2/2x.webp',
+  RainTime: 'https://cdn.7tv.app/emote/01FCY771D800007PQ2DF3GDTN6/2x.webp',
+};
+const ZW = new Set(['RainTime']);
+const PREFIX = { global: '#', trade: '$', party: '%', guildc: '&', whisper: '@From ' };
+
+const SCRIPT = [
+  ['global', null, 'Kaetheria', 'just dropped a mirror KEKW catJAM'],
+  ['global', 'RNG', 'Vorthos', 'no way PogU'],
+  ['party', null, 'mapdevice', 'portals up peepoHappy'],
+  ['global', null, 'Ulfrik', 'bricked my 6 link Sadge RainTime'],
+  ['trade', null, 'CurrencyCarl', 'WTS divines, cheaper than ninja EZ'],
+  ['global', 'TCE', 'Hollowmere', 'anyone else 1 portal ubers? monkaS'],
+  ['guildc', 'TCE', 'Brannoc', 'guild stash restocked peepoClap'],
+  ['global', null, 'Ilsabet', 'who is gonna tell him modCheck'],
+  ['whisper', null, 'Merchantia', 'still selling that ring? Kappa'],
+  ['global', null, 'Tolvar', 'just got one shot by a white mob OMEGALUL'],
+  ['global', null, 'Dravenna', 'patch notes tomorrow Aware'],
+  ['party', null, 'mapdevice', 'boss down Clap pepeD'],
+  ['global', 'GG', 'Seraphel', '1000 hours and still no headhunter ICANT'],
+  ['global', null, 'Kaetheria', 'it will drop next map Okayge'],
+  ['global', null, 'Ulfrik', 'my build at 3 fps WAYTOODANK'],
+  ['global', null, 'Vorthos', 'trade chat pepeLaugh'],
+  ['global', null, 'Hollowmere', 'Stare'],
+];
+
+function span(cls, text) { const s = document.createElement('span'); if (cls) s.className = cls; if (text != null) s.textContent = text; return s; }
+
+function renderText(text) {
+  const out = span('text'); let last = null;
+  for (const tok of text.split(' ')) {
+    const url = E[tok];
+    if (url && ZW.has(tok) && last) { const i = new Image(); i.src = url; i.alt = tok; last.appendChild(i); continue; }
+    if (out.childNodes.length) out.appendChild(document.createTextNode(' '));
+    if (url) { const w = span('emote'); const i = new Image(); i.src = url; i.alt = tok; i.title = tok; w.appendChild(i); out.appendChild(w); last = w; }
+    else { out.appendChild(document.createTextNode(tok)); last = null; }
+  }
+  return out;
+}
+
+function renderMsg([ch, guild, name, text]) {
+  const el = document.createElement('div'); el.className = `msg ${ch}`;
+  el.appendChild(span('', PREFIX[ch] || ''));
+  if (guild) el.appendChild(span('guild', `<${guild}>`));
+  el.appendChild(span('name', name)); el.appendChild(document.createTextNode(': ')); el.appendChild(renderText(text));
+  return el;
+}
+
+const ovl = document.getElementById('ovl'), poe = document.getElementById('poe');
+document.getElementById('cmp').append(...renderMsg(SCRIPT[0]).childNodes);
+
+const live = [];
+let i = 0;
+function push() {
+  const m = SCRIPT[i++ % SCRIPT.length];
+  const el = renderMsg(m); ovl.appendChild(el); live.push({ el, at: Date.now() });
+  const p = document.createElement('div'); p.className = 'l';
+  p.textContent = `${PREFIX[m[0]] || ''}${m[1] ? `<${m[1]}> ` : ''}${m[2]}: ${m[3]}`; poe.appendChild(p);
+  while (ovl.children.length > 14) ovl.firstChild.remove();
+  while (poe.children.length > 14) poe.firstChild.remove();
+}
+function next() {
+  push();
+  // occasionally pause long enough to show the fade-out and idle background
+  setTimeout(next, i % 7 === 0 ? 12500 : 1300 + Math.random() * 1600);
+}
+setInterval(() => {
+  const now = Date.now(); let active = false;
+  for (const e of live) { const f = now - e.at > 10000; e.el.classList.toggle('faded', f); active ||= !f; }
+  ovl.classList.toggle('idle', !active);
+}, 250);
+
+// hover reveal, same as the app: rest the cursor on the chat and the overlay steps aside
+let t = null;
+const scene = document.getElementById('scene');
+function inside(ev) { const r = ovl.getBoundingClientRect(); return ev.clientX >= r.left && ev.clientX < r.right && ev.clientY >= r.top && ev.clientY < r.bottom; }
+scene.addEventListener('mousemove', (ev) => {
+  if (inside(ev)) { if (!t) t = setTimeout(() => { ovl.classList.add('revealed'); scene.classList.add('revealed'); document.getElementById('hint').textContent = "This is PoE's own chat. Move away to bring the emotes back"; }, 350); }
+  else { clearTimeout(t); t = null; ovl.classList.remove('revealed'); scene.classList.remove('revealed'); document.getElementById('hint').textContent = 'Hover the chat ↓'; }
+});
+scene.addEventListener('mouseleave', () => { clearTimeout(t); t = null; ovl.classList.remove('revealed'); scene.classList.remove('revealed'); });
+ovl.style.pointerEvents = 'none';
+for (let k = 0; k < 4; k++) push();
+setTimeout(next, 1200);
+</script>
+</body>
+</html>

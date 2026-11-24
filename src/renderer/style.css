@@ -148,6 +148,7 @@ body.unlocked .msg.faded { opacity: 0.55; }
 .msg.guild   { color: var(--c-guild); }
 .msg.whisper-from, .msg.whisper-to { color: var(--c-whisper); }
 .msg.local   { color: var(--c-local); }
+.msg.system, .msg.system .text { color: #e8c36e; font-style: italic; }
 .msg .text   { color: #f4ede0; }
 .msg.whisper-from .text, .msg.whisper-to .text { color: var(--c-whisper); }
 

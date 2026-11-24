@@ -83,6 +83,45 @@ fn toggle_lock_inner(app: &AppHandle) {
     apply_lock(app);
 }
 
+struct UpdateItem(tauri::menu::MenuItem<tauri::Wry>);
+
+/// Post a line into the overlay's chat as if PoEmotes said it.
+fn notice(app: &AppHandle, text: String) {
+    let msg = json!({ "id": 0, "time": "", "channel": "system", "guild": null, "name": "PoEmotes", "text": text });
+    let _ = app.emit("messages", json!({ "messages": [msg], "backfill": false }));
+}
+
+/// Startup check only tells you; the tray item (or `install`) downloads and installs.
+fn check_updates(app: &AppHandle, install: bool) {
+    use tauri_plugin_updater::UpdaterExt;
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let updater = match app.updater() {
+            Ok(u) => u,
+            Err(e) => return set_status(&app, format!("Updater unavailable: {e}")),
+        };
+        match updater.check().await {
+            Ok(Some(update)) if install => {
+                notice(&app, format!("Installing PoEmotes {}...", update.version));
+                match update.download_and_install(|_, _| {}, || {}).await {
+                    Ok(()) => app.restart(),
+                    Err(e) => notice(&app, format!("Update failed: {e}")),
+                }
+            }
+            Ok(Some(update)) => {
+                if let Some(item) = app.try_state::<UpdateItem>() {
+                    let _ = item.0.set_text(format!("Install update {}", update.version));
+                }
+                notice(&app, format!("PoEmotes {} is out. Right-click the tray icon and choose Install update.", update.version));
+            }
+            Ok(None) if install => notice(&app, "PoEmotes is up to date.".into()),
+            Ok(None) => {}
+            Err(e) if install => notice(&app, format!("Update check failed: {e}")),
+            Err(e) => set_status(&app, format!("Update check failed: {e}")),
+        }
+    });
+}
+
 fn toggle_hidden(app: &AppHandle) {
     {
         let mut s = st(app).lock().unwrap();
@@ -99,9 +138,11 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let edit = item("edit", "Move / resize	Ctrl+Shift+L")?;
     let hide = item("hide", "Hide / show	Ctrl+Shift+H")?;
     let reload = item("reload", "Reload emotes")?;
+    let update = item("update", "Check for updates")?;
     let sep = PredefinedMenuItem::separator(app)?;
     let quit = item("quit", "Quit PoEmotes")?;
-    let menu = Menu::with_items(app, &[&settings, &edit, &hide, &reload, &sep, &quit])?;
+    let menu = Menu::with_items(app, &[&settings, &edit, &hide, &reload, &update, &sep, &quit])?;
+    app.manage(UpdateItem(update.clone()));
     let mut tray = TrayIconBuilder::with_id("main").tooltip("PoEmotes").menu(&menu).on_menu_event(|app, e| {
         match e.id.as_ref() {
             "settings" => {
@@ -116,6 +157,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
             "edit" => toggle_lock_inner(app),
             "hide" => toggle_hidden(app),
             "reload" => refresh_emotes_inner(app),
+            "update" => check_updates(app, true),
             "quit" => app.exit(0),
             _ => {}
         }
@@ -242,6 +284,7 @@ async fn init(app: AppHandle) -> Value {
     apply_lock(&app);
     start_tailer(&app);
     refresh_emotes_inner(&app);
+    check_updates(&app, false);
     out
 }
 
@@ -320,6 +363,7 @@ fn main() {
     }));
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_shortcuts(["ctrl+shift+l", "ctrl+shift+h"])
